@@ -116,8 +116,9 @@ def plot_side_by_side_bars(female_data, male_data, united_data, title):
 
 plot_side_by_side_bars(new_df_female, new_df_male, new_df_mixed_genders, "Side-by-Side Comparison of Mind-Wandering Dimensions")
 
-def plot_intrusive_thoughts(female_data, male_data, united_data, states_columns, title):
+def plot_intrusive_thoughts(female_data, male_data, united_data, title):
     # Ensure numeric data only
+    states_columns=[col for col in united_data.columns if "Mini_Item12" in col and "mean" in col]
     female_data = female_data[states_columns].apply(pd.to_numeric, errors='coerce')
     male_data = male_data[states_columns].apply(pd.to_numeric, errors='coerce')
     united_data = united_data[states_columns].apply(pd.to_numeric, errors='coerce')
@@ -169,7 +170,6 @@ plot_intrusive_thoughts(
     new_df_female,
     new_df_male,
     new_df_mixed_genders,
-    ["Mini_Item12_EO1", "Mini_Item12_EC1", "Mini_Item12_Music1", "Mini_Item12_Memory1", "Mini_Item12_Subtraction1"],
     "Intrusive Thoughts Across States (Men vs Women vs All)"
     )
 def compare_sessions_grouped(data, title):
