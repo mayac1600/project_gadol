@@ -3,6 +3,8 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 import seaborn as sns
+import statsmodels.api as sm
+
 df = pd.read_csv('/Users/mayacohen/Desktop/project_gadol/data/participants.the.one.that.works.csv')
 
 # List of desired columns
@@ -22,6 +24,7 @@ columns = [
 ]
 # Select the columns
 new_df_mixed_genders = df[columns].copy()
+
 
 def meaning_the_sessions(data):
     columns = data.columns
@@ -46,6 +49,8 @@ def meaning_the_sessions(data):
 
 new_df_mixed_genders = meaning_the_sessions(new_df_mixed_genders)
 
+
+
 def separating_genders(data):
     # Ensure the 'sex' column exists
     if 'sex' not in data.columns:
@@ -62,195 +67,154 @@ def separating_genders(data):
 # Call the function
 new_df_female, new_df_male = separating_genders(new_df_mixed_genders)
 
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import re
 
-def plot_side_by_side_bars(female_data, male_data, united_data, title):
-    def get_sorted_columns(data):
-        mind_wandering_columns = [
-            col for col in data.columns
-            if re.match(r'^\(\d+\)', col) and '_mean' in col
+def linear_regression_trial(data):
+    # Identify all relevant columns containing "mean"
+    all_relevant_cols = [col for col in data.columns if "_mean" in col]
+    print("all_relevant_cols:", all_relevant_cols)
+    data[all_relevant_cols] = data[all_relevant_cols].apply(lambda col: col.fillna(col.mean()), axis=0)
+
+    # Separate predictors and response variables
+    mind_wandering_predictors = data[[col for col in all_relevant_cols if "Mini_Item" not in col]]
+    intrusive_thoughts_predicted = [col for col in all_relevant_cols if "Mini_Item" in col]
+    print("mind_wandering_predictors:\n", mind_wandering_predictors)
+    print("intrusive_thoughts_predicted:\n", intrusive_thoughts_predicted)
+
+    # Set up a grid for subplots
+    num_plots = len(intrusive_thoughts_predicted)
+    fig, axes = plt.subplots(1, num_plots, figsize=(5 * num_plots, 6), sharey=True)
+
+    if num_plots == 1:
+        axes = [axes]  # Ensure axes is iterable for a single plot
+
+    # Dictionary to store models
+    models = {}
+
+    # Loop through each response variable
+    for i, intrusive_item in enumerate(intrusive_thoughts_predicted):
+        response_variable = data[intrusive_item]  # Extract the response variable data
+
+        # Add a constant for the intercept
+        predictors_with_constant = sm.add_constant(mind_wandering_predictors)
+
+        # Fit the regression model
+        model = sm.OLS(response_variable, predictors_with_constant).fit()
+
+        # Store the model in the dictionary
+        models[intrusive_item] = model
+
+        # Extract p-values
+        p_values = model.pvalues.drop('const')  # Exclude the intercept (const)
+
+        # Sort predictors by their numeric prefix (e.g., "(1)", "(2)")
+        sorted_indices = sorted(
+            range(len(mind_wandering_predictors.columns)),
+            key=lambda idx: int(re.search(r'\((\d+)\)', mind_wandering_predictors.columns[idx]).group(1))
+        )
+
+        # Apply the sorted order to p-values and predictor names
+        sorted_p_values = p_values.iloc[sorted_indices]
+        sorted_predictor_names = [mind_wandering_predictors.columns[idx] for idx in sorted_indices]
+
+        # Plot sorted p-values
+        axes[i].bar(sorted_predictor_names, sorted_p_values, color='skyblue', edgecolor='black')
+        axes[i].axhline(y=0.05, color='red', linestyle='--', label='Significance Threshold (0.05)')
+        axes[i].set_title(f'P-values for {re.sub(r"^Mini_Item12_", "", intrusive_item)}', fontsize=14)
+        axes[i].set_xlabel('Predictors', fontsize=12)
+        axes[i].set_ylabel('P-value', fontsize=12 if i == 0 else 0)  # Add ylabel only for the first plot
+
+        # Update X-axis labels with sorted predictor names
+        axes[i].set_xticks(range(len(sorted_predictor_names)))
+        axes[i].set_xticklabels(sorted_predictor_names, rotation=45, ha='right', fontsize=10)
+        axes[i].legend()
+
+    # Adjust layout
+    plt.tight_layout()
+    plt.show()
+
+    return models  # Return all models
+
+
+# Example usage
+models = linear_regression_trial(new_df_mixed_genders) 
+
+for state, model_data in models.items():
+    print("state", model_data.summary())
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import linregress
+
+def plot_signi(models, data):
+    """
+    Plots significant predictors against response variables, including p-values, correlation,
+    regression line, and R^2 displayed in the legend.
+    """
+    for state, model_data in models.items():
+        # Extract significant predictors (p-value <= 0.05), excluding the intercept ("const")
+        significant_results = [
+            predictor for predictor in model_data.pvalues.index
+            if predictor != "const" and model_data.pvalues[predictor] <= 0.05
         ]
-        mind_wandering_columns.sort(key=lambda x: int(re.search(r'\((\d+)\)', x).group(1)))
-        return mind_wandering_columns
 
-    female_columns = get_sorted_columns(female_data)
-    male_columns = get_sorted_columns(male_data)
-    united_columns = get_sorted_columns(united_data)
+        # Ensure the state variable exists in the data
+        if state not in data.columns:
+            print(f"State variable '{state}' not found in data.")
+            continue
 
-    assert female_columns == male_columns == united_columns, "Column orders do not match!"
+        # Plot each significant predictor against the state variable
+        for predic in significant_results:
+            # Ensure predictor exists in the data
+            if predic not in data.columns:
+                print(f"Predictor '{predic}' not found in data.")
+                continue
 
-    # Calculate statistics for each group (NaNs are automatically skipped)
-    female_means = female_data[female_columns].mean()
-    female_stds = female_data[female_columns].std()
+            # Drop NaN values for correlation and regression calculations
+            valid_data = data[[predic, state]].dropna()
 
-    male_means = male_data[male_columns].mean()
-    male_stds = male_data[male_columns].std()
+            if valid_data.empty:
+                print(f"No valid data for predictor '{predic}' and state '{state}'.")
+                continue
 
-    united_means = united_data[united_columns].mean()
-    united_stds = united_data[united_columns].std()
+            # Format p-value to 4 significant figures
+            p_value_toprint = f"{model_data.pvalues[predic]:.4g}"
 
-    # X positions for the bars
-    n_dimensions = len(female_columns)
-    bar_width = 0.25
-    x_positions = np.arange(n_dimensions)
+            # Calculate correlation coefficient
+            corr_toprint = np.corrcoef(valid_data[predic], valid_data[state])[0, 1]
 
-    female_positions = x_positions - bar_width
-    male_positions = x_positions
-    united_positions = x_positions + bar_width
+            # Calculate regression line using linregress
+            slope, intercept, r_value, _, _ = linregress(valid_data[predic], valid_data[state])
+            x_vals = np.linspace(valid_data[predic].min(), valid_data[predic].max(), 100)
+            y_vals = slope * x_vals + intercept
 
-    # Plot
-    plt.figure(figsize=(14, 7))
-    plt.bar(female_positions, female_means, yerr=female_stds, width=bar_width, label='Female', color='midnightblue', alpha=0.7)
-    plt.bar(male_positions, male_means, yerr=male_stds, width=bar_width, label='Male', color='moccasin', alpha=0.7)
-    plt.bar(united_positions, united_means, yerr=united_stds, width=bar_width, label='United', color='teal', alpha=0.7)
+            # Plot scatter and regression line
+            plt.figure(figsize=(8, 6))
+            plt.scatter(valid_data[predic], valid_data[state], color='blue', alpha=0.6, label='Data')
+            plt.plot(
+                x_vals, y_vals, color='red',
+                label=(
+                    f"Regression Line\n"
+                    f"$R^2$: {r_value**2:.2f}\n"
+                    f"p-value: {p_value_toprint}\n"
+                    f"Correlation: {corr_toprint:.2f}"
+                )
+            )
+            
+            # Add title and labels
+            plt.title(f'Scatter Plot: {predic} vs {state}', fontsize=14)
+            plt.xlabel(predic, fontsize=12)
+            plt.ylabel(state, fontsize=12)
+            plt.grid(True)
 
-    plt.xticks(x_positions, female_columns, rotation=45, ha='right')
-    plt.title(title)
-    plt.xlabel('Mind-Wandering Dimensions')
-    plt.ylabel('Mean Score')
-    plt.legend()
-    plt.grid(axis='y', linestyle='--', alpha=0.6)
-    plt.tight_layout()
+            # Add legend with text information
+            plt.legend(loc='best', fontsize=10)
 
-    plt.show()
+            plt.tight_layout()
+            plt.show()
 
-plot_side_by_side_bars(new_df_female, new_df_male, new_df_mixed_genders, "Side-by-Side Comparison of Mind-Wandering Dimensions")
-
-def plot_intrusive_thoughts(female_data, male_data, united_data, states_columns, title):
-    # Ensure numeric data only
-    female_data = female_data[states_columns].apply(pd.to_numeric, errors='coerce')
-    male_data = male_data[states_columns].apply(pd.to_numeric, errors='coerce')
-    united_data = united_data[states_columns].apply(pd.to_numeric, errors='coerce')
-
-    # Calculate means and standard deviations for each state (NaNs are skipped)
-    female_means = female_data.mean()
-    female_stds = female_data.std()
-
-    male_means = male_data.mean()
-    male_stds = male_data.std()
-
-    united_means = united_data.mean()
-    united_stds = united_data.std()
-
-    # Calculate the overall mean across all states for the horizontal line
-    overall_mean = united_data.mean().mean()
-
-    # X positions for the bars
-    n_states = len(states_columns)
-    bar_width = 0.25
-    x_positions = np.arange(n_states)
-
-    female_positions = x_positions - bar_width
-    male_positions = x_positions
-    united_positions = x_positions + bar_width
-
-    # Plot
-    plt.figure(figsize=(14, 7))
-
-    # Bar plots for each group
-    plt.bar(female_positions, female_means, yerr=female_stds, width=bar_width, label='Female', color='mediumpurple', alpha=0.7)
-    plt.bar(male_positions, male_means, yerr=male_stds, width=bar_width, label='Male', color='cadetblue', alpha=0.7)
-    plt.bar(united_positions, united_means, yerr=united_stds, width=bar_width, label='United', color='slategray', alpha=0.7)
-
-    # Formatting the plot
-    plt.axhline(overall_mean, color='midnightblue', linestyle='--', label='Overall Mean')
-    plt.xticks(x_positions, states_columns, rotation=45, ha='right')
-    plt.title(title)
-    plt.xlabel('States')
-    plt.ylabel('Mean Intrusive Thoughts')
-    plt.legend()
-    plt.grid(axis='y', linestyle='--', alpha=0.6)
-    plt.tight_layout()
-
-    plt.show()
-
-
-plot_intrusive_thoughts(
-    new_df_female,
-    new_df_male,
-    new_df_mixed_genders,
-    ["Mini_Item12_EO1", "Mini_Item12_EC1", "Mini_Item12_Music1", "Mini_Item12_Memory1", "Mini_Item12_Subtraction1"],
-    "Intrusive Thoughts Across States (Men vs Women vs All)"
-    )
-def compare_sessions_grouped(data, title):
-    # Group columns based on the last digit (1, 2, 3)
-    session1_columns = [col for col in data.columns if col.endswith('1')]
-    session2_columns = [col for col in data.columns if col.endswith('2')]
-    session3_columns = [col for col in data.columns if col.endswith('3')]
-
-    # Ensure common bases exist across all sessions
-    common_bases = sorted(set(
-        col[:-1] for col in session1_columns
-        if col[:-1] in [c[:-1] for c in session2_columns] and col[:-1] in [c[:-1] for c in session3_columns]
-    ))
-
-    max_min_differences = []
-    group_labels = []
-
-    session1_means, session2_means, session3_means = [], [], []
-    overall_means = []
-
-    for base in common_bases:
-        # Collect columns for this group
-        session_columns = [f"{base}{i}" for i in range(1, 4)]
-        session_data = data[session_columns].apply(pd.to_numeric, errors='coerce')
-
-        # Calculate means for each session
-        session1_means.append(session_data.iloc[:, 0].mean())
-        session2_means.append(session_data.iloc[:, 1].mean())
-        session3_means.append(session_data.iloc[:, 2].mean())
-
-        # Calculate overall mean for the item
-        overall_means.append(session_data.mean(axis=1).mean())
-
-        # Calculate max-min difference
-        max_values = session_data.max(axis=1)
-        min_values = session_data.min(axis=1)
-        max_min_differences.append((max_values - min_values).mean())
-        group_labels.append(base)
-
-    # Plotting
-    x_positions = np.arange(len(common_bases))
-    bar_width = 0.25
-
-    plt.figure(figsize=(16, 8))
-
-    # Bar plots for session means
-    plt.bar(x_positions - bar_width, session1_means, width=bar_width, label='Session 1', color='skyblue', alpha=0.7)
-    plt.bar(x_positions, session2_means, width=bar_width, label='Session 2', color='orange', alpha=0.7)
-    plt.bar(x_positions + bar_width, session3_means, width=bar_width, label='Session 3', color='green', alpha=0.7)
-
-    # Line plot for max-min differences
-    plt.plot(x_positions, max_min_differences, color='red', marker='o', linewidth=2, label='Max-Min Difference')
-
-    # Add overall mean horizontal lines and text
-    for i, mean in enumerate(overall_means):
-        # Horizontal line connecting all bars for the same group
-        plt.plot([x_positions[i] - bar_width, x_positions[i] + bar_width], [mean, mean], color='black', linestyle='-', linewidth=1.5)
-
-        # Add mean value text
-        plt.text(x_positions[i], mean + 0.05, f"{mean:.2f}", ha='center', va='bottom', fontsize=10, color='black', fontweight='bold')
-
-    # Formatting
-    plt.xticks(x_positions, group_labels, rotation=45, ha='right')
-    plt.title(title)
-    plt.xlabel('Metrics')
-    plt.ylabel('Values')
-    plt.axhline(np.mean(max_min_differences), color='purple', linestyle='--', label=f'Avg Max-Min = {np.mean(max_min_differences):.2f}')
-    plt.legend()
-    plt.grid(axis='y', linestyle='--', alpha=0.6)
-    plt.tight_layout()
-
-    plt.show()
-
-compare_sessions_grouped(
-    new_df_mixed_genders, 
-    "Comparison of Sessions with Max-Min Differences"
-)
-# Correlation Analysis
-plt.figure(figsize=(10, 8))
-correlation_matrix = new_df_mixed_genders.corr()
-sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
-plt.title("Correlation Matrix")
-plt.show()
-       
-
+plot_signi(models, new_df_mixed_genders)

@@ -3,6 +3,7 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 import seaborn as sns
+import statsmodels.api as sm
 df = pd.read_csv('/Users/mayacohen/Desktop/project_gadol/data/participants.the.one.that.works.csv')
 
 # List of desired columns
@@ -46,6 +47,9 @@ def meaning_the_sessions(data):
     return data
 
 new_df_mixed_genders = meaning_the_sessions(new_df_mixed_genders)
+print (new_df_mixed_genders.head())
+
+
 
 def separating_genders(data):
     # Ensure the 'sex' column exists
@@ -114,7 +118,7 @@ def plot_side_by_side_bars(female_data, male_data, united_data, title):
 
     plt.show()
 
-plot_side_by_side_bars(new_df_female, new_df_male, new_df_mixed_genders, "Side-by-Side Comparison of Mind-Wandering Dimensions")
+#plot_side_by_side_bars(new_df_female, new_df_male, new_df_mixed_genders, "Side-by-Side Comparison of Mind-Wandering Dimensions")
 
 def plot_intrusive_thoughts(female_data, male_data, united_data, title):
     # Ensure numeric data only
@@ -166,12 +170,12 @@ def plot_intrusive_thoughts(female_data, male_data, united_data, title):
     plt.show()
 
 
-plot_intrusive_thoughts(
-    new_df_female,
-    new_df_male,
-    new_df_mixed_genders,
-    "Intrusive Thoughts Across States (Men vs Women vs All)"
-    )
+#plot_intrusive_thoughts(
+ #   new_df_female,
+  #  new_df_male,
+   # new_df_mixed_genders,
+    #"Intrusive Thoughts Across States (Men vs Women vs All)"
+    #)
 def compare_sessions_grouped(data, title):
     # Custom sorting logic for ordering columns
     def custom_sort_key(column_name):
@@ -251,10 +255,10 @@ def compare_sessions_grouped(data, title):
 
     plt.show()
 
-compare_sessions_grouped(
-    new_df_mixed_genders, 
-    "Comparison of Sessions with Max-Min Differences"
-)
+#compare_sessions_grouped(
+ #   new_df_mixed_genders, 
+  #  "Comparison of Sessions with Max-Min Differences"
+#)
 
 import re
 
@@ -294,4 +298,78 @@ def plot_correlation_matrix(data, variables=None, title="Correlation Heatmap"):
     plt.show()
 
 # Example usage
-plot_correlation_matrix(new_df_mixed_genders, title="Custom Ordered Correlation Heatmap")
+#plot_correlation_matrix(new_df_mixed_genders, title="Custom Ordered Correlation Heatmap")
+
+
+
+
+def linear_regression_trial(data):
+    # Identify all relevant columns containing "mean"
+    all_relevant_cols = [col for col in data.columns if "_mean" in col]
+    print("all_relevant_cols:", all_relevant_cols)
+    data[all_relevant_cols] = data[all_relevant_cols].apply(lambda col: col.fillna(col.mean()), axis=0)
+
+    # Separate predictors and response variables
+    mind_wandering_predictors = data[[col for col in all_relevant_cols if "Mini_Item" not in col]]
+    intrusive_thoughts_predicted = [col for col in all_relevant_cols if "Mini_Item" in col]
+    print("mind_wandering_predictors:\n", mind_wandering_predictors)
+    print("intrusive_thoughts_predicted:\n", intrusive_thoughts_predicted)
+
+    # Set up a grid for subplots
+    num_plots = len(intrusive_thoughts_predicted)
+    fig, axes = plt.subplots(1, num_plots, figsize=(5 * num_plots, 6), sharey=True)
+
+    if num_plots == 1:
+        axes = [axes]  # Ensure axes is iterable for a single plot
+
+    # Dictionary to store models
+    models = {}
+
+    # Loop through each response variable
+    for i, intrusive_item in enumerate(intrusive_thoughts_predicted):
+        response_variable = data[intrusive_item]  # Extract the response variable data
+
+        # Add a constant for the intercept
+        predictors_with_constant = sm.add_constant(mind_wandering_predictors)
+
+        # Fit the regression model
+        model = sm.OLS(response_variable, predictors_with_constant).fit()
+
+        # Store the model in the dictionary
+        models[intrusive_item] = model
+
+        # Display the summary for the current model
+        print(f"Regression results for {intrusive_item}:")
+        print(model.summary())
+        print("\n" + "=" * 80 + "\n")  # Separator between summaries
+
+        # Extract p-values
+        p_values = model.pvalues.drop('const')  # Exclude the intercept (const)
+
+        # Plot p-values
+        axes[i].bar(p_values.index, p_values, color='skyblue', edgecolor='black')
+        axes[i].axhline(y=0.05, color='red', linestyle='--', label='Significance Threshold (0.05)')
+        axes[i].set_title(f'P-values for {re.sub(r"^Mini_Item12_", "", intrusive_item)}', fontsize=14)
+        axes[i].set_xlabel('Predictors', fontsize=12)
+        axes[i].set_ylabel('P-value', fontsize=12 if i == 0 else 0)  # Add ylabel only for the first plot
+
+        # Update X-axis predictor titles
+        predictor_titles = [re.sub(r'_session_mean$', '', col) for col in mind_wandering_predictors.columns]
+        predictor_titles = sorted(predictor_titles, key=lambda x: int(re.search(r'\((\d+)\)', x).group(1)))
+        axes[i].set_xticks(range(len(predictor_titles)))  # Set positions for X-ticks
+        axes[i].set_xticklabels(predictor_titles, rotation=45, ha='right', fontsize=10)  # Set custom labels
+        axes[i].legend()
+
+    # Adjust layout
+    plt.tight_layout()
+    plt.show()
+
+    return models  # Return all models
+
+# Example usage
+models = linear_regression_trial(new_df_mixed_genders)
+
+# Accessing individual models
+for key, model in models.items():
+    print(f"Summary for {key}:\n")
+    print("this is the model!!!!!!!",model.summary())
