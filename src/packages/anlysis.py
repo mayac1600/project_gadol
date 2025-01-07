@@ -1,104 +1,15 @@
-import pandas as pd
-import numpy as np
-import re
-import matplotlib.pyplot as plt
-import seaborn as sns
-import statsmodels.api as sm
-from scipy.stats import linregress
-
-df = pd.read_csv('/Users/mayacohen/Desktop/project_gadol/data/participants.the.one.that.works.csv')
-
-# List of desired columns
-columns = [
-    '(1)Discontinuity of Mind_session1', '(2)Theory of Mind_session1', '(3)Self_session1', '(4)Planning_session1',
-    '(5)Sleepiness_session1', '(6)Comfort_session1', '(7)Somatic Awareness_session1', '(8)Health Concern_session1',
-    '(9)Visual Thought_session1', '(10)Verbal Thought_session1', '(1)Discontinuity of Mind_session2',
-    '(2)Theory of Mind_session2', '(3)Self_session2', '(4)Planning_session2', '(5)Sleepiness_session2',
-    '(6)Comfort_session2', '(7)Somatic Awareness_session2', '(8)Health Concern_session2', '(9)Visual Thought_session2',
-    '(10)Verbal Thought_session2', '(1)Discontinuity of Mind_session3', '(2)Theory of Mind_session3',
-    '(3)Self_session3', '(4)Planning_session3', '(5)Sleepiness_session3', '(6)Comfort_session3',
-    '(7)Somatic Awareness_session3', '(8)Health Concern_session3', '(9)Visual Thought_session3',
-    '(10)Verbal Thought_session3',
-    "Mini_Item12_EO1", "Mini_Item12_EC1", "Mini_Item12_Music1", "Mini_Item12_Memory1", "Mini_Item12_Subtraction1",
-    "Mini_Item12_EO2", "Mini_Item12_EC2", "Mini_Item12_Music2", "Mini_Item12_Memory2", "Mini_Item12_Subtraction2",
-    "Mini_Item12_EO3", "Mini_Item12_EC3", "Mini_Item12_Music3", "Mini_Item12_Memory3", "Mini_Item12_Subtraction3",'sex',
-]
-# Select the columns
-new_df_mixed_genders = df[columns].copy()
-
-# Function to remove outliers
-def remove_outliers(data):
-    """
-    Replace outliers (values more than ±3 standard deviations from the mean) with NaN.
-    """
-    for column in data.select_dtypes(include=[np.number]):  # Only process numeric columns
-        mean = data[column].mean()
-        std = data[column].std()
-        lower_limit = mean - 2.5 * std
-        upper_limit = mean + 2.5 * std
-        # Replace outliers with NaN
-        data[column] = data[column].apply(lambda x: np.nan if x < lower_limit or x > upper_limit else x)
-    return data
-
-# Apply the function to remove outliers
-new_df_mixed_genders = remove_outliers(new_df_mixed_genders)
-
-def meaning_the_sessions(data):
-    columns = data.columns
-    identical_columns_dict = {}
-    # Strip the last part of column names (e.g., '_session1', '_session2')
-    stripped_columns = [re.sub(r'\d$', '', col) for col in columns if col != 'sex']
-    unique_columns = set(stripped_columns)
-    # Group columns based on their base name
-    for column_uni in unique_columns:
-        matching_columns = [col for col in columns if re.sub(r'\d$', '', col) == column_uni]
-        identical_columns_dict[column_uni] = matching_columns
-        # Exclude 'sex' column from numeric processing
-        if 'sex' in matching_columns:
-            matching_columns.remove('sex')
-        numeric_data = data[matching_columns].apply(pd.to_numeric, errors='coerce')
-        if not numeric_data.empty:
-            # Calculate means without filling NaN values
-            row_means = numeric_data.mean(axis=1, skipna=True)
-            data[column_uni + '_mean'] = row_means
-
-    return data
-
-new_df_mixed_genders = meaning_the_sessions(new_df_mixed_genders)
 
 
-
-def separating_genders(data):
-    # Ensure the 'sex' column exists
-    if 'sex' not in data.columns:
-        raise KeyError("'sex' column is missing in the DataFrame.")
-    
-    # Clean the 'sex' column to handle inconsistencies
-    data['sex'] = data['sex'].astype(str).str.strip().str.lower()
-    # Filter rows for males and females
-    new_df_male = data[data['sex'] == 'm'].copy()
-    new_df_female = data[data['sex'] == 'f'].copy()
-
-
-    return new_df_female, new_df_male
-# Call the function
-new_df_female, new_df_male = separating_genders(new_df_mixed_genders)
-
-import statsmodels.api as sm
-import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
-import statsmodels.api as sm
-import re
-
-def linear_regression(data):
+def linear_regression_trial(data):
     # Identify all relevant columns containing "mean"
     all_relevant_cols = [col for col in data.columns if "_mean" in col]
+    print("all_relevant_cols:", all_relevant_cols)
     data[all_relevant_cols] = data[all_relevant_cols].apply(lambda col: col.fillna(col.mean()), axis=0)
 
     # Separate predictors and response variables
     mind_wandering_predictors = data[[col for col in all_relevant_cols if "Mini_Item" not in col]]
     intrusive_thoughts_predicted = [col for col in all_relevant_cols if "Mini_Item" in col]
-
+    
     # Set up a grid for subplots
     num_plots = len(intrusive_thoughts_predicted)
     fig, axes = plt.subplots(1, num_plots, figsize=(5 * num_plots, 6), sharey=True)
@@ -152,12 +63,6 @@ def linear_regression(data):
     plt.show()
 
     return models  # Return all models
-
-
-# Example usage
-#models = linear_regression(new_df_mixed_genders) 
-
-
 
 def plot_signi(models, data):
     """
@@ -226,7 +131,6 @@ def plot_signi(models, data):
             plt.tight_layout()
             plt.show()
 
-#plot_signi(models, new_df_mixed_genders)
 
 def linear_regression_with_sex_interactions(data):
     """
@@ -318,13 +222,9 @@ def linear_regression_with_sex_interactions(data):
 
     # Adjust layout
     plt.tight_layout()
-   # plt.show()
+    plt.show()
 
     return models, data
-models_sex, new_df_mixed_genders_proccessed= linear_regression_with_sex_interactions(new_df_mixed_genders)
-
-from scipy.stats import linregress
-
 
 def plot_signi_bysex(models, data, maledata, femaledata):
     """
@@ -395,7 +295,7 @@ def plot_signi_bysex(models, data, maledata, femaledata):
             plt.plot(x_vals_female, y_vals_female, color='orange', linestyle='--', label='Female Regression Line')
 
             # Add title, labels, legend, and p-value for interaction
-            plt.title(f'{base_predictor} vs {state} (Interaction p-value: {p_value_for_interaction:.4g})', fontsize=14)
+            plt.title(f'{base_predictor} vs {re.sub(r"^Mini_Item12_", "", state)} (Interaction p-value: {p_value_for_interaction:.4g})', fontsize=14)
             plt.xlabel(base_predictor, fontsize=12)
             plt.ylabel(state, fontsize=12)
             plt.grid(True)
@@ -405,6 +305,3 @@ def plot_signi_bysex(models, data, maledata, femaledata):
 
     print("All significant results by state:", all_significant_results)
 
-
-# Call the function with your models and dataset
-plot_signi_bysex(models_sex, new_df_mixed_genders, new_df_male, new_df_female)
