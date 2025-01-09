@@ -23,10 +23,8 @@ import unittest
 from tests.tests_newdataframe import TestMeaningTheSessions
 
 
-# df = pd.read_csv('/Users/mayacohen/Desktop/project_gadol/data/participants.the.one.that.works.csv')
-# main.py
+path = pd.read_csv('/Users/mayacohen/Desktop/project_gadol/data/participants.the.one.that.works.csv')
 
-# print(f"main.py is being executed with __name__ = {__name__}")  # Debug line
 
 def main():
     unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromModule(TestMeaningTheSessions))

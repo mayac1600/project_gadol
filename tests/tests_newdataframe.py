@@ -16,28 +16,29 @@ import numpy as np
 #positive test- i want to check that it handles simple data corecctly and means session in a simple data framev
 def remove_outliers(data):
     """
-    Replace outliers (values more than ±2.5 standard deviations from the mean) with NaN.
+    Replace outliers (values outside 1.5 times the IQR) with NaN.
     """
-    # Create a copy to avoid modifying the original data in place
-    data = data.copy()
+    data = data.copy()  # Work on a copy to avoid modifying the original data
 
     for column in data.select_dtypes(include=[np.number]):  # Only process numeric columns
-        mean = data[column].mean()
-        std = data[column].std()
+        Q1 = data[column].quantile(0.25)  # First quartile (25th percentile)
+        Q3 = data[column].quantile(0.75)  # Third quartile (75th percentile)
+        IQR = Q3 - Q1  # Interquartile range
 
-        # Handle cases where std is zero (no variance in data)
-        if std == 0:
-            continue
+        # Define lower and upper bounds for outliers
+        lower_limit = Q1 - 1.5 * IQR
+        upper_limit = Q3 + 1.5 * IQR
 
-        lower_limit = mean - 2.5 * std
-        upper_limit = mean + 2.5 * std
+        # Debug prints
+        print(f"Processing column: {column}")
+        print(f"Q1: {Q1}, Q3: {Q3}, IQR: {IQR}")
+        print(f"Lower limit: {lower_limit}, Upper limit: {upper_limit}")
 
         # Replace outliers with NaN
         data[column] = data[column].apply(lambda x: np.nan if x < lower_limit or x > upper_limit else x)
 
     return data
 
-    return data
 
 def meaning_the_sessions(data):
     columns = data.columns
