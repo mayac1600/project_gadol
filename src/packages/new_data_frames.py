@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import statsmodels.api as sm
 df = pd.read_csv('/Users/mayacohen/Desktop/project_gadol/data/participants.the.one.that.works.csv')
-
 # List of desired columns
 columns = [
     '(1)Discontinuity of Mind_session1', '(2)Theory of Mind_session1', '(3)Self_session1', '(4)Planning_session1',
@@ -37,26 +36,42 @@ def remove_outliers(data):
         data[column] = data[column].apply(lambda x: np.nan if x < lower_limit or x > upper_limit else x)
     return data
 
+import pandas as pd
+import re
+
 def meaning_the_sessions(data):
     columns = data.columns
     identical_columns_dict = {}
+    
     # Strip the last part of column names (e.g., '_session1', '_session2')
     stripped_columns = [re.sub(r'\d$', '', col) for col in columns if col != 'sex']
     unique_columns = set(stripped_columns)
+    
     # Group columns based on their base name
     for column_uni in unique_columns:
         matching_columns = [col for col in columns if re.sub(r'\d$', '', col) == column_uni]
         identical_columns_dict[column_uni] = matching_columns
-        # Exclude 'sex' column from numeric processing
-        if 'sex' in matching_columns:
-            matching_columns.remove('sex')
+        
+        # Exclude 'sex' column and empty matching columns
+        matching_columns = [col for col in matching_columns if col != 'sex' and not data[col].isnull().all()]
+        
+        if not matching_columns:
+            # Skip processing if no valid matching columns remain
+            continue
+        
+        # Convert to numeric, ignoring errors, and skip non-numeric columns
         numeric_data = data[matching_columns].apply(pd.to_numeric, errors='coerce')
-        if not numeric_data.empty:
-            # Calculate means without filling NaN values
-            row_means = numeric_data.mean(axis=1, skipna=True)
-            data[column_uni + '_mean'] = row_means
+        
+        if numeric_data.empty:
+            # Skip processing if no numeric columns exist
+            continue
+        
+        # Calculate means without filling NaN values
+        row_means = numeric_data.mean(axis=1, skipna=True)
+        data[column_uni + '_mean'] = row_means
 
     return data
+
 
 new_df_mixed_genders = meaning_the_sessions(new_df_mixed_genders)
 print (new_df_mixed_genders.head())
