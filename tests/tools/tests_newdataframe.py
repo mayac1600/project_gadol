@@ -1,78 +1,9 @@
 import pandas as pd
 import unittest 
-import re
-import sys
-import os
-import matplotlib.pyplot as plt
 import numpy as np
-#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# from src.packages.new_data_frames import meaning_the_sessions
-# from src.packages.new_data_frames import remove_outliers
-# plt.switch_backend('Agg')
-# Add the `src` directory to Python's search path
-# Import the function to test
-#from src.packages.new_data_frames import meaning_the_sessions as meaning_the_sessions
-#first i want to test meaning the sessions
-#positive test- i want to check that it handles simple data corecctly and means session in a simple data framev
-def remove_outliers(data):
-    """
-    Replace outliers (values outside 1.5 times the IQR) with NaN.
-    """
-    data = data.copy()  # Work on a copy to avoid modifying the original data
-
-    for column in data.select_dtypes(include=[np.number]):  # Only process numeric columns
-        Q1 = data[column].quantile(0.25)  # First quartile (25th percentile)
-        Q3 = data[column].quantile(0.75)  # Third quartile (75th percentile)
-        IQR = Q3 - Q1  # Interquartile range
-
-        # Define lower and upper bounds for outliers
-        lower_limit = Q1 - 1.5 * IQR
-        upper_limit = Q3 + 1.5 * IQR
-
-        # Debug prints
-        print(f"Processing column: {column}")
-        print(f"Q1: {Q1}, Q3: {Q3}, IQR: {IQR}")
-        print(f"Lower limit: {lower_limit}, Upper limit: {upper_limit}")
-
-        # Replace outliers with NaN
-        data[column] = data[column].apply(lambda x: np.nan if x < lower_limit or x > upper_limit else x)
-
-    return data
-
-
-def meaning_the_sessions(data):
-    columns = data.columns
-    identical_columns_dict = {}
-    
-    # Strip the last part of column names (e.g., '_session1', '_session2')
-    stripped_columns = [re.sub(r'\d$', '', col) for col in columns if col != 'sex']
-    unique_columns = set(stripped_columns)
-    
-    # Group columns based on their base name
-    for column_uni in unique_columns:
-        matching_columns = [col for col in columns if re.sub(r'\d$', '', col) == column_uni]
-        identical_columns_dict[column_uni] = matching_columns
-        
-        # Exclude 'sex' column and empty matching columns
-        matching_columns = [col for col in matching_columns if col != 'sex' and not data[col].isnull().all()]
-        
-        if not matching_columns:
-            # Skip processing if no valid matching columns remain
-            continue
-        
-        # Convert to numeric, ignoring errors, and skip non-numeric columns
-        numeric_data = data[matching_columns].apply(pd.to_numeric, errors='coerce')
-        
-        if numeric_data.empty:
-            # Skip processing if no numeric columns exist
-            continue
-        
-        # Calculate means without filling NaN values
-        row_means = numeric_data.mean(axis=1, skipna=True)
-        data[column_uni + '_mean'] = row_means
-
-    return data
-
+from packages.tools.new_data_frames import remove_outliers
+from packages.tools.new_data_frames import meaning_the_sessions
+from packages.tools.new_data_frames import separating_genders
 
 class TestMeaningTheSessions(unittest.TestCase):
 
@@ -135,8 +66,6 @@ class TestMeaningTheSessions(unittest.TestCase):
         self.assertIn('A_mean', result.columns)
         self.assertListEqual(result['A_mean'].tolist(), [1, 2, 3])
 
-
-
 class TestRemoveOutliers(unittest.TestCase):
 
     def test_positive_case(self):
@@ -194,6 +123,87 @@ class TestRemoveOutliers(unittest.TestCase):
 
         # Assert no boundary values are replaced with NaN
         self.assertFalse(result.isnull().values.any(), "Boundary values should not be considered outliers")
+
+class TestSeparatingGenders(unittest.TestCase):
+
+    def test_normal_data(self):
+        """Test with normal data containing both males and females."""
+        data = pd.DataFrame({
+            'sex': ['m', 'f', 'm', 'f'],
+            'age': [25, 30, 35, 40]
+        })
+        new_df_female, new_df_male = separating_genders(data)
+        
+        # Assert females
+        self.assertEqual(len(new_df_female), 2)
+        self.assertListEqual(new_df_female['sex'].tolist(), ['f', 'f'])
+        self.assertListEqual(new_df_female['age'].tolist(), [30, 40])
+        
+        # Assert males
+        self.assertEqual(len(new_df_male), 2)
+        self.assertListEqual(new_df_male['sex'].tolist(), ['m', 'm'])
+        self.assertListEqual(new_df_male['age'].tolist(), [25, 35])
+
+    def test_missing_one_gender(self):
+        """Test with data missing one gender."""
+        data = pd.DataFrame({
+            'sex': ['m', 'm', 'm'],
+            'age': [25, 35, 45]
+        })
+        new_df_female, new_df_male = separating_genders(data)
+        
+        # Assert females
+        self.assertEqual(len(new_df_female), 0)  # Should be empty
+        self.assertTrue(new_df_female.empty)
+
+        # Assert males
+        self.assertEqual(len(new_df_male), 3)
+        self.assertListEqual(new_df_male['sex'].tolist(), ['m', 'm', 'm'])
+        self.assertListEqual(new_df_male['age'].tolist(), [25, 35, 45])
+
+    def test_ignore_invalid_values(self):
+        """Test with invalid values in the 'sex' column."""
+        data = pd.DataFrame({
+            'sex': ['m', 'f', 'unknown', 'other', 'f', 'M', 'F '],
+            'age': [25, 30, 35, 40, 45, 50, 55]
+        })
+        new_df_female, new_df_male = separating_genders(data)
+        
+        # Assert females
+        self.assertEqual(len(new_df_female), 3)
+        self.assertListEqual(new_df_female['sex'].tolist(), ['f', 'f', 'f'])
+        self.assertListEqual(new_df_female['age'].tolist(), [30, 45, 55])
+        
+        # Assert males
+        self.assertEqual(len(new_df_male), 2)
+        self.assertListEqual(new_df_male['sex'].tolist(), ['m', 'm'])
+        self.assertListEqual(new_df_male['age'].tolist(), [25, 50])
+
+    def test_missing_sex_column(self):
+        """Test when the 'sex' column is missing."""
+        data = pd.DataFrame({
+            'age': [25, 30, 35]
+        })
+        with self.assertRaises(KeyError):
+            separating_genders(data)
+
+    def test_case_insensitivity_and_whitespace(self):
+        """Test case insensitivity and handling of extra whitespace."""
+        data = pd.DataFrame({
+            'sex': [' M ', ' f ', ' M', 'F'],
+            'age': [25, 30, 35, 40]
+        })
+        new_df_female, new_df_male = separating_genders(data)
+        
+        # Assert females
+        self.assertEqual(len(new_df_female), 2)
+        self.assertListEqual(new_df_female['sex'].tolist(), ['f', 'f'])
+        self.assertListEqual(new_df_female['age'].tolist(), [30, 40])
+        
+        # Assert males
+        self.assertEqual(len(new_df_male), 2)
+        self.assertListEqual(new_df_male['sex'].tolist(), ['m', 'm'])
+        self.assertListEqual(new_df_male['age'].tolist(), [25, 35])
 
 
 if __name__ == "__main__":

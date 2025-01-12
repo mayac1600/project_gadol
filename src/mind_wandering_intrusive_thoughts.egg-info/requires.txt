@@ -1,0 +1,13 @@
+numpy>=2.2.1
+pandas>=2.2.3
+pandas-stubs>=2.2.3.241126
+matplotlib>=3.10.0
+seaborn>=0.13.2
+statsmodels>=0.14.4
+scipy>=1.15.0
+
+[dev]
+mypy
+types-seaborn
+types-pytz
+pandas-stubs

@@ -1,0 +1,59 @@
+# Project Metadata
+[project]
+name = "mind-wandering-intrusive-thoughts"
+version = "1.0.0"
+description = """
+A project investigating how different aspects of mind-wandering predict intrusive thoughts across various cognitive tasks.
+Includes gender-specific analysis under EEG measurements.
+"""
+authors = [
+    { name = "Maya Cohen", email = "mayacohen1201@gmail.com" },
+    { name = "Shun Okada", email = "shun25okada@gmail.com" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+
+# Python Compatibility
+requires-python = ">=3.13.0"
+
+# Dependencies
+dependencies = [
+    "numpy>=2.2.1",
+    "pandas>=2.2.3",
+    "pandas-stubs>=2.2.3.241126",
+    "matplotlib>=3.10.0",
+    "seaborn>=0.13.2",
+    "statsmodels>=0.14.4",
+    "scipy>=1.15.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy",
+    "types-seaborn",
+    "types-pytz",
+    "pandas-stubs"
+]
+
+# Build System
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# Tool-specific configurations
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--strict-markers"
+
+# Packages Configuration
+[tool.setuptools]
+package-dir = {"" = "src"}  # Set src as the root of the package hierarchy
+
+[tool.setuptools.packages.find]
+where = ["src"]  # Look for packages in the src folder
+
+# Custom Scripts or Commands
+[tool.poetry.scripts]
+activate-env = "venv\\Scripts\\activate"
+install-deps = "pip install -r requirements.txt"
+run-tests = "unittest tests"

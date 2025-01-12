@@ -1,3 +1,23 @@
+Metadata-Version: 2.2
+Name: mind-wandering-intrusive-thoughts
+Version: 1.0.0
+Summary: A project investigating how different aspects of mind-wandering predict intrusive thoughts across various cognitive tasks.
+Author-email: Maya Cohen <mayacohen1201@gmail.com>, Shun Okada <shun25okada@gmail.com>
+Requires-Python: >=3.13.0
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=2.2.1
+Requires-Dist: pandas>=2.2.3
+Requires-Dist: pandas-stubs>=2.2.3.241126
+Requires-Dist: matplotlib>=3.10.0
+Requires-Dist: seaborn>=0.13.2
+Requires-Dist: statsmodels>=0.14.4
+Requires-Dist: scipy>=1.15.0
+Provides-Extra: dev
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: types-seaborn; extra == "dev"
+Requires-Dist: types-pytz; extra == "dev"
+Requires-Dist: pandas-stubs; extra == "dev"
+
 Welcome our the project !!!
 ## BACKGROUND TO THIS PROJECT
    This project investigates how different aspects of mind-wandering predict intrusive thoughts across various cognitive tasks measured by an after imagining questionnaire and explores whether these predictions differ between men and women. The cognitive tasks took place under EEG measurements.
@@ -149,28 +169,29 @@ tzdata          2024.2
 
        explorations.py:
        This file aim is to explore our data and visualize it in a convinient way to the user to better understand the data the user will face in this prohect and understanding the parameters we will use to answer our research question.
-           def plot_side_by_side_bar This function takes female_data, male_data, and united_data DataFrames containing mind-wandering dimension scores. extracts, sorts, and computes the mean and standard deviation of these scores, and visualizes them in a side-by-side bar chart. The output is a bar plot comparing mean scores for each dimension across the three groups with error bars indicating standard deviations.
-          
+           def plot_side_by_side_bar -
+               
+           def get_sorted_columns -
+               this function sort the columns as the order we want them to be orgnized in a better way
            def plot_intrusive_thoughts -
                this show a plot of the data from the instrusive thoughts questionaires
-            def compare_sessions_grouped -
-                Analyzes and visualizes grouped session data by comparing session means, max-min differences, and overall means for common base metrics.
+           def compare_sessions_grouped -
+               ......
+           def custom_sort_key -
+               ......
            def plot_correlation_matrix -
                a heatmap to show correlation between multiple of pairs
 
 
        anlysis.py:
            def linear_regression_trial -
-               This function performs linear regression to analyze predictors (non-"Mini_Item" columns) against response variables ("Mini_Item" columns) in a dataset. It fills missing values with column means, fits OLS models for each response variable, and plots p-values to highlight significant predictors. The function returns a dictionary of fitted models for further analysis.
+               .....
            def plot_signi -
-               
-                This function visualizes relationships between significant predictors (with p-values ≤ 0.05) and response variables from a regression model. For each valid predictor-response pair, it computes the p-value, correlation, regression line, and 
-                𝑅2, then creates a scatter plot with a regression line and a detailed legend showing these statistics.
+               ......
            def linear_regression_with_sex_interactions -
-               This function fits linear regression models with interaction terms for a binary 'sex' variable, analyzing gender-specific effects. It processes the dataset by handling missing values, encoding 'sex', and creating interaction terms. For each target variable, it fits a model and visualizes interaction p-values in bar plots, highlighting significant predictors. The function returns fitted models and the processed dataset.
-
+               ......
            def plot_signi_bysex -
-               This function visualizes significant interaction terms (_bysex) from regression models, plotting male and female data separately for each state variable. It calculates correlations, regression lines, and interaction p-values, displaying scatter plots with regression lines for both genders. Titles, labels, and legends highlight the key statistics
+               ......
 ## 7. USES
    Just run the main.py file and you will see
 
