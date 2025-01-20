@@ -1,3 +1,23 @@
+Metadata-Version: 2.2
+Name: mind-wandering-intrusive-thoughts
+Version: 1.0.0
+Summary: A project investigating how different aspects of mind-wandering predict intrusive thoughts across various cognitive tasks.
+Author-email: Maya Cohen <mayacohen1201@gmail.com>, Shun Okada <shun25okada@gmail.com>
+Requires-Python: >=3.13.0
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=2.2.1
+Requires-Dist: pandas>=2.2.3
+Requires-Dist: pandas-stubs>=2.2.3.241126
+Requires-Dist: matplotlib>=3.10.0
+Requires-Dist: seaborn>=0.13.2
+Requires-Dist: statsmodels>=0.14.4
+Requires-Dist: scipy>=1.15.0
+Provides-Extra: dev
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: types-seaborn; extra == "dev"
+Requires-Dist: types-pytz; extra == "dev"
+Requires-Dist: pandas-stubs; extra == "dev"
+
 Welcome our the project !!!
 ## BACKGROUND TO THIS PROJECT
    This project investigates how different aspects of mind-wandering predict intrusive thoughts across various cognitive tasks measured by an after imagining questionnaire and explores whether these predictions differ between men and women. The cognitive tasks took place under EEG measurements.
@@ -29,7 +49,6 @@ Welcome our the project !!!
 
 
     Project Report:
-        https://docs.google.com/document/d/1jbuRMIA-MGc_SwT2X8NXAzK3iP2b9Vxe/edit
 ## 1. GENERAL AND PREWORKING SETS
    make sure you have the correct python version 3.13.0 by writing in the terminal python --version
 ## 2. VIRTUAL ENVIROMENT ACTIVATION
@@ -43,12 +62,8 @@ First when working on this project install and activate a virtual enviroment to 
    1) python.exe -m pip install --upgrade pip
    2) pip install -e .
    3) pip install -e .[dev]
-
-    if this method doesnt work please see requirements.txt file and install packages manually as describe.
-
    after it run everything check if everything installed properly using:
-   pip list,
-    then the output in the terminal should be:
+   pip list, then the output in the terminal should be:
     Package         Version
 --------------- -----------
 contourpy                         1.3.1

@@ -4,6 +4,8 @@ This file is for the user's use to better understand requirements of libraries a
 python version needs to be 3.13.0
 
 
+paste each of the lines in the terminal if you dont have one of these.
+
 pip install pandas
 pip install pandas-stubs
 pip install numpy
@@ -15,6 +17,10 @@ pip install types-seaborn
 pip install statsmodels
 pip install --upgrade statsmodels
 pip install --upgrade scipy
+
+or paste this at once:
+pip install pandas,pandas-stubs,numpy,matplotlib,mypy,seaborn,
+--upgrade seaborn,types-seaborn,statsmodels,--upgrade statsmodels, upgrade spicy
 
 
 to properly work on this project you will need some extensions, with the correct version:
