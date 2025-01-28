@@ -3,7 +3,7 @@ import statsmodels.api as sm
 import logging
 import numpy as np
 import re
-
+from scipy.stats import linregress
 
 def linear_regression_trial(data):
     '''This function performs linear regression to analyze predictors (non-"Mini_Item" columns) 
