@@ -3,13 +3,13 @@ import statsmodels.api as sm
 import logging
 import numpy as np
 import re
-from scipy.stats import linregress
+
+
 def linear_regression_trial(data):
     '''This function performs linear regression to analyze predictors (non-"Mini_Item" columns) 
-    against response variables ("Mini_Item" columns) in
-      a dataset. It fills missing values with column means
-      , fits OLS models for each response variable, and plots p-values to highlight significant 
-      predictors. The function returns a dictionary of fitted models for further analysis.
+    against response variables ("Mini_Item" columns) in a dataset. It fills missing values with 
+    column means, fits OLS models for each response variable, and plots p-values to highlight 
+    significant predictors. The function returns a dictionary of fitted models for further analysis.
     '''
     # Identify all relevant columns containing "mean"
     all_relevant_cols = [col for col in data.columns if "_mean" in col]
@@ -48,12 +48,16 @@ def linear_regression_trial(data):
         axes[i].set_title(f'P-values for {re.sub(r"^Mini_Item\d+_", "", intrusive_item)}', fontsize=14)
         axes[i].set_xlabel('Predictors', fontsize=12)
         axes[i].set_ylabel('P-value', fontsize=12 if i == 0 else 0)
+        axes[i].tick_params(axis='x', rotation=45)  # Ensure x-axis labels are rotated
+        axes[i].set_xticks(range(len(p_values.index)))  # Ensure ticks align correctly
+        axes[i].set_xticklabels(p_values.index, rotation=45, ha='right')  # Rotate labels properly
         axes[i].legend()
 
     plt.tight_layout()
     plt.show()
-    logging.basicConfig(level=logging.INFO)
-    return models
+
+    return models  # Return the fitted models for further analysis
+
 
 def plot_signi(models, data):
     """

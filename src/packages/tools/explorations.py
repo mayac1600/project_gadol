@@ -69,23 +69,22 @@ def plot_side_by_side_bars(female_data, male_data, united_data, title="Side-by-S
 
 def compare_sessions_grouped(data, title):
     """
-    This function analyzes and visualizes session-based data by identifying metrics with a common base name across session-specific columns (e.g., metric1, metric2), computing session means, max-min differences, and overall means. It generates a grouped bar chart to compare session means, a line plot for max-min differences, and overlays dashed lines for overall means with annotations. The function provides a dictionary summarizing these statistics for further analysis, offering insights into trends and variability across sessions.
+    Analyzes and visualizes session-based data by identifying metrics with a common base name across
+    session-specific columns, computing session means, max-min differences, and overall means.
     """
-
+    
     # Extract unique numeric suffixes representing session numbers
     try:
         session_numbers = sorted(set(
-            int(re.search(r'(\d+)$', col).group(1))
-            for col in data.columns if re.search(r'(\d+)$', col)
+            int(re.search(r'\d+$', col).group(0))
+            for col in data.columns if re.search(r'\d+$', col)
         ))
     except AttributeError:
         print("Error: Column names must end with numeric session identifiers.")
         return
-
+    
     # Identify common base names across all sessions
-    base_names = set(
-        re.sub(r'\d+$', '', col) for col in data.columns
-    )
+    base_names = set(re.sub(r'\d+$', '', col) for col in data.columns)
     common_bases = [
         base for base in base_names
         if all(f"{base}{num}" in data.columns for num in session_numbers)
@@ -94,7 +93,7 @@ def compare_sessions_grouped(data, title):
     if not common_bases:
         print("No common base metrics found across all sessions.")
         return
-
+    
     # Initialize lists for plotting
     session_means = {num: [] for num in session_numbers}
     max_min_differences = []
@@ -122,17 +121,31 @@ def compare_sessions_grouped(data, title):
 
         overall_means.append(overall_mean)
         max_min_differences.append(max_min_diff)
-        group_labels.append(base)
+        
+        # Process labels (replace "Mini_Item12" with "IT")
+        base_label = re.sub(r'Mini_Item12', 'IT', base)
+        group_labels.append(base_label)
 
     # If no valid data is found, exit the function
     if not group_labels:
         print("No valid data found for plotting.")
         return
-
+    
+    # Extract numbers in parentheses from titles, order them accordingly
+    def extract_number(label):
+        match = re.search(r'\((\d+)\)', label)
+        return int(match.group(1)) if match else float('inf')  # Non-numbered go last
+    
+    sorted_indices = sorted(range(len(group_labels)), key=lambda i: extract_number(group_labels[i]))
+    group_labels = [group_labels[i] for i in sorted_indices]
+    overall_means = [overall_means[i] for i in sorted_indices]
+    max_min_differences = [max_min_differences[i] for i in sorted_indices]
+    for num in session_numbers:
+        session_means[num] = [session_means[num][i] for i in sorted_indices]
+    
     # Plotting
     x_positions = np.arange(len(group_labels))
     bar_width = 0.2
-
     plt.figure(figsize=(16, 8))
 
     # Plot bars for each session
@@ -143,7 +156,7 @@ def compare_sessions_grouped(data, title):
             width=bar_width,
             label=f'Session {num}'
         )
-
+    
     # Plot line for max-min differences
     plt.plot(
         x_positions + bar_width * (len(session_numbers) - 1) / 2,
@@ -153,7 +166,7 @@ def compare_sessions_grouped(data, title):
         linewidth=2,
         label='Max-Min Difference'
     )
-
+    
     # Add overall mean lines and annotations
     for i, mean in enumerate(overall_means):
         plt.plot(
@@ -173,7 +186,7 @@ def compare_sessions_grouped(data, title):
             color='black',
             fontweight='bold'
         )
-
+    
     # Formatting
     plt.xticks(
         x_positions + bar_width * (len(session_numbers) - 1) / 2,
@@ -194,6 +207,7 @@ def compare_sessions_grouped(data, title):
     plt.grid(axis='y', linestyle='--', alpha=0.6)
     plt.tight_layout()
     plt.show()
+
     
 def plot_intrusive_thoughts(female_data, male_data, united_data, title="Intrusive Thoughts Across States (Men vs Women vs All)"):
     ''''This function visualizes the comparison of mean intrusive thought scores (and their standard deviations) across female, male, and united groups for shared states (columns matching "Mini_Item12" with "mean"). It calculates group-wise means, standard deviations, and an overall mean, plotting grouped bar charts for each category with error bars and a dashed horizontal line for the overall mean. The x-axis represents the shared states, and the y-axis shows mean scores, with formatting for clarity and readability.'''
