@@ -44,9 +44,6 @@ First when working on this project install and activate a virtual enviroment to 
    2) pip install -e .
    3) pip install -e .[dev]
 
-    if this method doesnt work please see requirements.txt file and install packages manually as describe.
-
-   after it run everything check if everything installed properly using:
    pip list,
     then the output in the terminal should be:
     Package         Version
