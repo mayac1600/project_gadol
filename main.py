@@ -14,8 +14,6 @@ path='/Users/mayacohen/Desktop/project_gadol/data/participants.the.one.that.work
 
 df = pd.read_csv(path)
 
-
-
 # List of desired columns
 columns = [
     '(1)Discontinuity of Mind_session1', '(2)Theory of Mind_session1', '(3)Self_session1', '(4)Planning_session1',
@@ -32,35 +30,28 @@ columns = [
     "Mini_Item12_EO3", "Mini_Item12_EC3", "Mini_Item12_Music3", "Mini_Item12_Memory3", "Mini_Item12_Subtraction3",'sex',
 ]
 # Select the columns
+
 new_df_mixed_genders = df[columns].copy()
+
+#data processing
 new_df_mixed_genders = remove_outliers(new_df_mixed_genders)
 mts(new_df_mixed_genders)
-
-# Call the function
 new_df_female, new_df_male = separating_genders(new_df_mixed_genders)
 
-# Print results
-print("Female DataFrame:")
-print(new_df_female)
-
-print("\nMale DataFrame:")
-print(new_df_male)
- 
+#explorations
 plot_side_by_side_bars(new_df_female, new_df_male, new_df_mixed_genders, "Side-by-Side Comparison of Mind-Wandering Dimensions")
-
 plot_intrusive_thoughts(
     new_df_female,
     new_df_male,
     new_df_mixed_genders,
     )
- 
 compare_sessions_grouped(
   new_df_mixed_genders, 
  "Comparison of Sessions with Max-Min Differences"
 )
-
 plot_correlation_matrix(new_df_mixed_genders, title="Custom Ordered Correlation Heatmap")
 
+# calling analysis function
 models = linear_regression_trial(new_df_mixed_genders) 
 
 plot_signi(models, new_df_mixed_genders)
