@@ -111,6 +111,8 @@ project_gadol
    |       |------tools
    |                |
    |                |-------__init__.py
+                    |-------tests_exploration.py
+   |                |-------tests_anlysis.py
    |                |-------test_newdataframe.py
    |
    |
@@ -122,7 +124,7 @@ project_gadol
    |
    |-------__main__.py (main script, used to run the whole code smoothly)
    |
-   |-------requirements.txt
+   |-------git_ignore.git.ignore
 ## 6. FUNCTIONS, DATA AND EXPLANATION
    In this section you can find all the functions used in this project and in which modules to find them:
    For example..
