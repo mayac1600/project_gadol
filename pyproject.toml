@@ -13,8 +13,10 @@ authors = [
 readme = "README.md"
 license = { file = "LICENSE" }
 
+
 # Python Compatibility
 requires-python = ">=3.13.0"
+
 
 # Dependencies
 dependencies = [
@@ -27,6 +29,7 @@ dependencies = [
     "scipy>=1.15.0"
 ]
 
+
 [project.optional-dependencies]
 dev = [
     "mypy",
@@ -35,25 +38,43 @@ dev = [
     "pandas-stubs"
 ]
 
+
 # Build System
 [build-system]
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+
 
 # Tool-specific configurations
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--strict-markers"
 
+
 # Packages Configuration
 [tool.setuptools]
 package-dir = {"" = "src"}  # Set src as the root of the package hierarchy
 
+
 [tool.setuptools.packages.find]
 where = ["src"]  # Look for packages in the src folder
+
 
 # Custom Scripts or Commands
 [tool.poetry.scripts]
 activate-env = "venv\\Scripts\\activate"
 install-deps = "pip install -r requirements.txt"
-run-tests = "unittest tests"
+run-tests = "python -m unittest discover tests"
+
+
+[tool.poetry.dependencies]
+python = "^3.8"  # Adjust to your version
+
+
+[tool.poetry.dev-dependencies]
+unittest = "*"  # unittest is built-in, so this line is optional
+
+
+
+
+

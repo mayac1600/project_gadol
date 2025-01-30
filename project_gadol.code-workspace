@@ -1,26 +1,14 @@
 {
     "folders": [
       {
-        "path": "."  // Root of the project (project_gadol)
+        "path": "src"  
       },
       {
-        "path": "src"  // Source code directory
+        "path": "tests" 
       },
       {
-        "path": "src/packages"  // Packages within src
+        "path": "data"
       },
-      {
-        "path": "src/packages/tools"  // Tools within packages
-      },
-      {
-        "path": "tests"  // Test scripts directory
-      },
-      {
-        "path": "tests/tools"  // Tools within tests
-      },
-      {
-        "path": "data"  // Data directory
-      }
     ],
     "settings": {
       "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
