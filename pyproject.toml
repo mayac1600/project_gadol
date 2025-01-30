@@ -64,17 +64,7 @@ where = ["src"]  # Look for packages in the src folder
 [tool.poetry.scripts]
 activate-env = "venv\\Scripts\\activate"
 install-deps = "pip install -r requirements.txt"
-run-tests = "python -m unittest discover tests"
-
-
-[tool.poetry.dependencies]
-python = "^3.8"  # Adjust to your version
-
-
-[tool.poetry.dev-dependencies]
-unittest = "*"  # unittest is built-in, so this line is optional
-
-
+run-tests = "unittest tests"
 
 
 
